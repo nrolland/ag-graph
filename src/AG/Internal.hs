@@ -38,7 +38,7 @@ above = pr ?above
 -- | Turns the explicit parameters @?above@ and @?below@ into explicit
 -- ones.
 
-explicit :: ((?above :: q, ?below :: a -> q) => b) -> q -> (a -> q) -> b
+explicit :: ((?above :: as, ?below :: a -> as) => b) -> as -> (a -> as) -> b
 explicit x ab be = x where ?above = ab; ?below = be
 
 
@@ -82,12 +82,11 @@ prodSyn sp sq t = (sp t, sq t)
 -- inherited attribute that is defined by the semantic function into
 -- the available attributes.
 
-type Inh' f p q = forall m i . (Mapping m i, ?below :: i -> p, ?above :: p)
-                                => f i -> m q
+type Inh' f as i = forall m a . (Mapping m a, ?below :: a -> as, ?above :: as)
+                                => f a -> m i
 
 -- | The type of semantic functions for inherited attributes.
-
-type Inh f p q = (q :< p) => Inh' f p q
+type Inh f as i = (i :< as) => Inh' f as i
 
 -- | Combines the semantic functions for two inherited attributes to
 -- form a semantic function for the compound attribute consisting of

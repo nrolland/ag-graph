@@ -60,19 +60,23 @@ data  Exp  =  LitB Bool       -- Boolean literal
 
 type  Name = String
 
+-- sharing
 e1 =  let  a = Add (Var "x") (LitI 0)
       in   Eq a a
 
+-- same exp, no sharing
 e1' = Eq  (Add (Var "x") (LitI 0))
           (Add (Var "x") (LitI 0))
 
 double :: Exp -> Exp
 double a = Add a a
 
+-- big expression
 e2 =  iterate double (LitI 5) !! 8
 
 double' a = Let "a" a (Add (Var "a") (Var "a"))
 
+-- small expression bc sharing
 e2' = iterate double' (LitI 5) !! 8
 
 data  Type  = BoolType | IntType deriving (Eq, Show)
@@ -153,11 +157,14 @@ typeInfS (Iter' v n i b)
   ,  ti == tb                     =  Just tb
 typeInfS _                        =  Nothing
 
+-- Inh contient la condition Mapping m a avec a univ, donc on peut utiliser |→
+-- et o. question : quelle structure + preuve pour mapping a l'utilisation?
 typeInfI :: (Maybe Type :< atts) => Inh ExpF atts Env
 typeInfI (Iter' v n i b)  =  b |-> insertEnv v ti above
                                where ti = typeOf i
 typeInfI _                =  o
 
+--
 typeInf :: Env -> Tree ExpF -> Maybe Type
 typeInf env = runAG typeInfS typeInfI (const env)
 
@@ -254,7 +261,7 @@ instance EqConstr ExpF
 
 -- | Make the DAG well-scoped
 rename' :: Dag ExpF -> Dag ExpF
-rename' = rename (Just "")
+rename' = undefined -- rename (Just "")
 
 alphaEq' :: Tree ExpF -> Tree ExpF -> Bool
 alphaEq' = alphaEq (Nothing :: Maybe Name)

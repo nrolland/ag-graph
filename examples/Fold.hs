@@ -1,7 +1,10 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RankNTypes       #-}
 {-# LANGUAGE TypeOperators    #-}
+{-# LANGUAGE UnicodeSyntax    #-}
 
-module LeavesBelow where
+
+module Fold where
 
 import           Control.Applicative
 import           Control.Monad
@@ -10,40 +13,33 @@ import qualified Data.Set            as Set
 import           Data.Traversable    (Traversable (..))
 import           System.IO.Unsafe
 
-import           Data.Foldable
-
+import           Data.Foldable       hiding (fold)
 
 import           AG
 import           Dag.AG
 import           Dag.Internal
 
+type Algebra f c = f c → c
+
+fold :: Functor f ⇒ Algebra f c → Tree f → c
+fold alg (In t) = alg (fmap (fold alg) t)
+
+algS :: ∀ f c atts. (Functor f, Traversable f, c :< atts) => Algebra f c → Syn f atts c
+algS alg (fa ∷ f a) = alg ((below <$> fa) ∷ f c)  -- below ∷ (?below ∷ a → as, c ∈ as) ⇒ a → c
 
 
+-- fold ne peut exprimer leaves below
+algI ::  (Functor f, Traversable f) ⇒ Inh f atts Int
+algI ft   = o
 
+fold' ∷  (Functor f, Traversable f) ⇒ Algebra f c → Tree f → c
+fold' alg =  runAG (algS alg) algI (const (0 ∷ Int))
 
 data IntTreeF a = Leaf Int | Node a a
   deriving (Eq, Show)
 
-
-data IntTree = Leaf' Int | Node' IntTree IntTree
-  deriving (Eq, Show)
-
 iNode x y = In (Node x y)
 iLeaf i = In (Leaf i)
-
-
-leavesBelow :: Int -> IntTree -> Set Int
-leavesBelow d (Leaf' i)
-    | d <= 0                 =  Set.singleton i
-    | otherwise              =  Set.empty
-leavesBelow d (Node' t1 t2)  =
-    leavesBelow (d-1) t1 `Set.union` leavesBelow (d-1) t2
-
-
-t = let a = Node' (Node' (Leaf' 2)
-                         (Leaf' 3))
-                  (Leaf' 4)
-    in Node' a a
 
 instance Foldable IntTreeF where
     foldr _ z (Leaf _) = z
@@ -60,7 +56,7 @@ instance Traversable IntTreeF where
     traverse _ (Leaf i) = pure (Leaf i)
     traverse f (Node x y) = liftA2 Node (f x) (f y)
 
-
+-- fold ne peut exprimer leaves below
 leavesBelowI :: Inh IntTreeF atts Int
 leavesBelowI (Leaf i)      = o
 leavesBelowI (Node t1 t2)  = t1 |-> d' & t2 |-> d'
@@ -74,7 +70,7 @@ leavesBelowS (Node t1 t2)  =  below t1 `Set.union` below t2
 
 leavesBelow' :: Int -> Tree IntTreeF -> Set Int
 leavesBelow' d = runAG leavesBelowS leavesBelowI (const d)
--- pour tous mes fils numerotes je renvois la constante d
+-- cf signature de runAG dans AG.hs
 
 leavesBelowG :: Int -> Dag IntTreeF -> Set Int
 leavesBelowG d = runAGDag min leavesBelowS leavesBelowI (const d)
@@ -119,3 +115,6 @@ intTreeTestT1 = leavesBelow' 3 (unravelDag i1)
 intTreeTestG2 = leavesBelowG 3 i2
 intTreeTestT2 = leavesBelow' 3 (unravelDag i2)
 
+
+
+-- les competences d'appui, de coordination ou de complement

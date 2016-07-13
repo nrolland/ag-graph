@@ -24,18 +24,18 @@ module AG
     , module I
     )  where
 
-import AG.Internal
+import           AG.Internal
 import qualified AG.Internal as I hiding (explicit)
-import Mapping as I
-import Tree as I
-import Projection as I
+import           Mapping     as I
+import           Projection  as I
+import           Tree        as I
 
 
 
 
 -- | This function runs an attribute grammar on a term. The result is
 -- the (combined) synthesised attribute at the root of the term.
-
+-- on specialise (Maybe Type :< atts) de typeInfI en (Maybe Type, Env)
 runAG :: forall f s i . Traversable f
       => Syn' f (s,i) s -- ^ semantic function of synthesised attributes
       -> Inh' f (s,i) i -- ^ semantic function of inherited attributes
