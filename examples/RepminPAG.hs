@@ -15,12 +15,14 @@
 
 module RepminPAG where
 
-import LeavesBelow (IntTreeF(..))
+import LeavesBelow (IntTreeF(..),renderDag2)
 import PAG
 import Dag.PAG
 
 import Data.Foldable
 import System.IO.Unsafe
+
+
 
 newtype MinS a = MinS {unMinS :: Int} deriving (Functor, Foldable, Traversable)
 newtype MinI a = MinI a deriving (Functor, Foldable, Traversable)
@@ -90,3 +92,11 @@ it2 = iNode x (iNode (iLeaf 5) x)
 
 i2 :: Dag IntTreeF
 i2 = unsafePerformIO $ reifyDag it2
+
+si1 = renderDag2 i1
+sri1 = renderDag2 . repminG $  i1
+srdi1 = renderDag2 . repminDoubleG $  i1
+
+
+
+

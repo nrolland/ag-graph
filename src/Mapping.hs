@@ -1,9 +1,9 @@
-{-# LANGUAGE DeriveTraversable #-}
-{-# LANGUAGE TupleSections #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE DeriveTraversable          #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FunctionalDependencies     #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE TupleSections              #-}
 
 module Mapping
     ( Numbered (..)
@@ -17,17 +17,21 @@ module Mapping
     , lookupNumMap'
     , NumMap) where
 
-import Data.IntMap (IntMap)
-import qualified Data.IntMap as IntMap
-import Data.Traversable
-import Data.Foldable
+import           Data.Foldable
+import           Data.IntMap         (IntMap)
+import qualified Data.IntMap         as IntMap
+import           Data.Traversable
 
-import Control.Monad.State hiding (mapM)
-import Prelude hiding (mapM)
+import           Control.Monad.State hiding (mapM)
+import           Prelude             hiding (mapM)
 
 
 -- | This type is used for numbering components of a functorial value.
 data Numbered a = Numbered Int a
+
+instance Show a =>  Show (Numbered a) where
+  showsPrec d (Numbered i a) = showParen (d > 10) $ showString $
+                               "i = " ++ show i ++ " : " ++ show a
 
 unNumbered :: Numbered a -> a
 unNumbered (Numbered _ x) = x
@@ -89,6 +93,6 @@ instance Mapping (NumMap k) (Numbered k) where
 
     findWithDefault d (Numbered i _) m = lookupNumMap d i m
 
-    prodMapWith f p q (NumMap mp) (NumMap mq) = NumMap $ IntMap.mergeWithKey merge 
+    prodMapWith f p q (NumMap mp) (NumMap mq) = NumMap $ IntMap.mergeWithKey merge
                                           (IntMap.map (`f` q)) (IntMap.map (p `f`)) mp mq
       where merge _ p q = Just (p `f` q)

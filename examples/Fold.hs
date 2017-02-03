@@ -1,7 +1,10 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE RankNTypes       #-}
-{-# LANGUAGE TypeOperators    #-}
-{-# LANGUAGE UnicodeSyntax    #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE RankNTypes          #-}
+{-# LANGUAGE TypeOperators       #-}
+{-# LANGUAGE UnicodeSyntax       #-}
+
+{-# LANGUAGE ScopedTypeVariables #-}
+
 
 
 module Fold where
@@ -14,12 +17,23 @@ import           Data.Traversable    (Traversable (..))
 import           System.IO.Unsafe
 
 import           Data.Foldable       hiding (fold)
+import           Data.Map            hiding (fold)
+import           Data.Void
 
 import           AG
 import           Dag.AG
 import           Dag.Internal
 
+import           Data.Constraint
+import           Data.Proxy
+import           Projection.TypeFam
+
 type Algebra f c = f c → c
+
+
+t1 ∷ Dict (Eq (Int))
+t1 = Dict
+
 
 fold :: Functor f ⇒ Algebra f c → Tree f → c
 fold alg (In t) = alg (fmap (fold alg) t)
@@ -27,13 +41,62 @@ fold alg (In t) = alg (fmap (fold alg) t)
 algS :: ∀ f c atts. (Functor f, Traversable f, c :< atts) => Algebra f c → Syn f atts c
 algS alg (fa ∷ f a) = alg ((below <$> fa) ∷ f c)  -- below ∷ (?below ∷ a → as, c ∈ as) ⇒ a → c
 
-
 -- fold ne peut exprimer leaves below
-algI ::  (Functor f, Traversable f) ⇒ Inh f atts Int
-algI ft   = o
+algI ::  ∀ f c atts. (Functor f, Traversable f) ⇒ Inh f atts Int
+algI ft  = o
 
-fold' ∷  (Functor f, Traversable f) ⇒ Algebra f c → Tree f → c
+
+-- le type doit etre pleinement applique sinon la recherche d'instance ne marche pas
+fold' ∷  (Functor f, Traversable f, Ord c, c :< (c,Int), Int :< (c,Int)) ⇒ Algebra f c → Tree f → c
 fold' alg =  runAG (algS alg) algI (const (0 ∷ Int))
+
+
+-- | This function runs an attribute grammar on a term with no inherited attribute
+-- the (combined) synthesised attribute at the root of the term.
+runAGF :: forall f s . Traversable f
+      => Syn' f s s -- ^ semantic function of synthesised attributes
+      -> Tree f         -- ^ input tree
+      -> s
+runAGF syn  t = sFin where
+    sFin = run t
+    run :: Tree f -> s
+    run (In t) = s where
+        --bel (Numbered n c) =  Numbered n (run c) -- je recurse avec le type numbered
+        --t'  = bel <$> number t   -- j'enrichis le type avec numbered
+        --s   = explicit syn s unNumbered t'  -- pour delivrer le resultat final, j'enleve l'enrichissement
+        t' = run <$> t -- je recurse sans enrichissment
+        s   = explicit syn s id t' -- je delivre le resultat
+
+fold2 ∷  (Functor f, Traversable f, Ord c) ⇒ Algebra f c → Tree f → c
+fold2 alg =  runAGF (algS alg)
+
+
+p ∷ Dict (Int :< (Char,Int))
+p = Dict
+
+-- cf TypeFam.hs qThe first argument of ‘Dict’ should have kind ‘Constraint’, but
+-- ‘Elem Int (Char, Int)’ has kind ‘RPos’
+
+--p1 ∷ Dict (Elem Int (Char,Int))
+--p1 = Dict
+
+-- :k GetPointer
+-- GetPointer :: RPos -> * -> * -> ghc-prim-0.4.0.0:GHC.Prim.Constraint
+
+p2 ∷ Dict (GetPointer (Elem Int (Char,Int)) Int (Char,Int))
+p2 = Dict
+
+--   No instance for (GetPointer
+--                       (Ch (Elem Int c) ('Found 'Here))
+--                       Int (c, Int))
+--p3 ∷ ∀ c. Dict (GetPointer (Elem Int (c,Int)) Int (c,Int))
+--p3 = Dict
+
+-- on calcule bien Elem Int (c,Int) vers (Ch (Elem Int c) ('Found 'Here))
+-- pourquoi pas ensuite appliquer Ch ?? vers Found (Right 'Here) parce que le
+-- type doit etre completement applique, cf limitation evoquee dans le papier
+
+
 
 data IntTreeF a = Leaf Int | Node a a
   deriving (Eq, Show)

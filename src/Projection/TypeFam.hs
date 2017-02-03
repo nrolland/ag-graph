@@ -10,9 +10,9 @@
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
-module Projection.TypeFam (pr, (:<)) where
+module Projection.TypeFam where -- (pr, (:<)) where
 
-import Prelude hiding (Either (..))
+import           Prelude hiding (Either (..))
 
 -- | Path to a node in a binary tree.
 data Pos = Here | Left Pos | Right Pos

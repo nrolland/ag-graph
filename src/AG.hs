@@ -25,7 +25,7 @@ module AG
     )  where
 
 import           AG.Internal
-import qualified AG.Internal as I hiding (explicit)
+import qualified AG.Internal as I
 import           Mapping     as I
 import           Projection  as I
 import           Tree        as I
@@ -47,9 +47,10 @@ runAG syn inh init t = sFin where
     iFin = init sFin
     run :: i -> Tree f -> s
     run i (In t) = s where
+        -- bel :: Numbered (Tree f) -> Numbered (s, i)
         bel (Numbered n c) =  let i' = lookupNumMap i n m
                               in Numbered n (run i' c, i')
-        t'  = fmap bel (number t)
+        t'  = bel <$> number t
         m   = explicit inh (s,i) unNumbered t'
         s   = explicit syn (s,i) unNumbered t'
 
