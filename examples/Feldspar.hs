@@ -142,7 +142,7 @@ instance EqConstr Feldspar
 --------------------------------------------------------------------------------
 
 -- | The type of Feldspar expressions
-newtype Data a = Data { unData :: Tree Feldspar }
+newtype Data a = Data { unData :: Tree Feldspar } deriving Show
 
 -- | Construct a copy of an expression in which all sharing is lost
 destroySharing :: Data a -> Data a

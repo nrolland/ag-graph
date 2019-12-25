@@ -12,7 +12,7 @@ extra-source-files:
   examples/*.hs
 
 library
-  hs-source-dirs:   src
+  hs-source-dirs:   src  examples
   Exposed-Modules:  AG
                     PAG
                     Dag
@@ -37,6 +37,7 @@ library
                     PAG.Projection.Simple
                     PAG.Projection.TypeFam
                     PAG.Product
+                    
 
   build-depends:
     base <5,

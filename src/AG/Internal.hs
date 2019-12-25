@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE Rank2Types     #-}
 {-# LANGUAGE TypeOperators  #-}
